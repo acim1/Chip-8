@@ -45,6 +45,20 @@ getReg :: Chip8 -> Reg -> Word8
 getReg _  n | n < 0x0 || n > 0xF = error "Can only retrieve registers 0-F"
 getReg c8 n = M.findWithDefault 0x00 (fromIntegral n) $ regs c8
 
+
+-- Special Registers
+getI :: Chip8 -> I
+getI = i
+
+setI :: Chip8 -> Address -> Chip8
+setI c8 n = c8 {i = n}
+
+getPC :: Chip8 -> PC
+getPC = pc
+
+setPC :: Chip8 -> Address -> Chip8
+setPC c8 n = c8 {pc = n}
+
 -- RAM
 setMem :: Chip8 -> Address -> Word8 -> Chip8
 setMem _  n _ | n < 0x000 || n > 0xFFF = error "Can only update addresses 0x000-0xFFF"
