@@ -12,7 +12,7 @@ type OpCode    = Word16
 
 type RAM       = M.IntMap Word8
 
-type Reg       = Word8
+type RegN      = Word8
 
 type Registers = M.IntMap Word8
 
@@ -36,12 +36,16 @@ data Chip8 = C8 {
     ram   :: RAM
 }
 
+-- Construction
+mkChip8 :: Chip8
+mkChip8 = undefined
+
 -- Registers
-setReg :: Chip8 -> Reg -> Word8 -> Chip8
+setReg :: Chip8 -> RegN -> Word8 -> Chip8
 setReg _  n _ | n < 0x0 || n > 0xF = error "Can only update registers 0-F"
 setReg c8 n x = c8 {regs = M.insert (fromIntegral n) x (regs c8)} 
 
-getReg :: Chip8 -> Reg -> Word8
+getReg :: Chip8 -> RegN -> Word8
 getReg _  n | n < 0x0 || n > 0xF = error "Can only retrieve registers 0-F"
 getReg c8 n = M.findWithDefault 0x00 (fromIntegral n) $ regs c8
 
@@ -58,6 +62,18 @@ getPC = pc
 
 setPC :: Chip8 -> Address -> Chip8
 setPC c8 n = c8 {pc = n}
+
+setDT :: Chip8 -> Word8 -> Chip8
+setDT c8 x = c8 {dt = x}
+
+getDT :: Chip8 -> Word8
+getDT = dt
+
+setST :: Chip8 -> Word8 -> Chip8
+setST c8 x = c8 {st = x}
+
+getST :: Chip8 -> Word8
+getST = st 
 
 -- RAM
 setMem :: Chip8 -> Address -> Word8 -> Chip8
@@ -86,8 +102,6 @@ push c8 n = c8 {stack = push' (stack c8) n}
   where
     push' xs _ | (length xs == 16) = error "Chip-8 stack can only be 16 deep"
     push' xs x = x:xs
-
--- To Do: I, DT, ST...
 
 
 -- Memory Addresses
