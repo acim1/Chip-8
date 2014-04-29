@@ -2,7 +2,7 @@ module Chip8 where
 
 import Data.List
 import Data.Maybe
-import Control.Monad
+import Control.Monad.State.Lazy
 import Data.Word
 import Data.IntMap.Lazy as M
 
@@ -34,11 +34,23 @@ data Chip8 = C8 {
     pc    :: PC,
     stack :: Stack,
     ram   :: RAM
-}
+} deriving Show
 
 -- Construction
 mkChip8 :: Chip8
-mkChip8 = undefined
+mkChip8 = C8 {
+    regs  = M.empty, 
+    i     = 0x000, 
+    dt    = 0x00, 
+    st    = 0x00, 
+    pc    = 0x000, 
+    stack = [], 
+    ram   = M.empty
+}
+
+-- Load Programs
+loadProg :: Chip8 -> Address -> [Word8] ->Chip8
+loadProg = undefined
 
 -- Registers
 setReg :: Chip8 -> RegN -> Word8 -> Chip8
