@@ -54,12 +54,12 @@ loadProg = undefined
 
 -- Registers
 setReg :: Chip8 -> RegN -> Word8 -> Chip8
-setReg _  n _ | n < 0x0 || n > 0xF = error "Can only update registers 0-F"
-setReg c8 n x = c8 {regs = M.insert (fromIntegral n) x (regs c8)} 
+setReg _  k _ | k < 0x0 || k > 0xF = error "Can only update registers 0-F"
+setReg c8 k x = c8 {regs = M.insert (fromIntegral k) x (regs c8)} 
 
 getReg :: Chip8 -> RegN -> Word8
-getReg _  n | n < 0x0 || n > 0xF = error "Can only retrieve registers 0-F"
-getReg c8 n = M.findWithDefault 0x00 (fromIntegral n) $ regs c8
+getReg _  k | k < 0x0 || k > 0xF = error "Can only retrieve registers 0-F"
+getReg c8 k = M.findWithDefault 0x00 (fromIntegral k) $ regs c8
 
 
 -- Special Registers
@@ -67,13 +67,13 @@ getI :: Chip8 -> I
 getI = i
 
 setI :: Chip8 -> Address -> Chip8
-setI c8 n = c8 {i = n}
+setI c8 k = c8 {i = k}
 
 getPC :: Chip8 -> PC
 getPC = pc
 
 setPC :: Chip8 -> Address -> Chip8
-setPC c8 n = c8 {pc = n}
+setPC c8 k = c8 {pc = k}
 
 setDT :: Chip8 -> Word8 -> Chip8
 setDT c8 x = c8 {dt = x}
