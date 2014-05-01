@@ -48,9 +48,10 @@ mkChip8 = C8 {
     ram   = M.empty
 }
 
--- Load Programs
-loadProg :: Chip8 -> Address -> [Word8] ->Chip8
-loadProg = undefined
+-- Load program/program data in contiguous addresses
+loadData :: Chip8 -> Address -> [Word8] ->Chip8
+loadData c8 k [] = c8
+loadData c8 k (x:xs) = loadData (setMem c8 k x) (k+1) xs
 
 -- Registers
 setReg :: Chip8 -> RegN -> Word8 -> Chip8
