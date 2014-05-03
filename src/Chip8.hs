@@ -5,6 +5,7 @@ import Data.Maybe
 import Control.Monad.State.Lazy
 import Data.Word
 import Data.IntMap.Lazy as M
+import System.Random
 
 type Address   = Word16
 
@@ -33,12 +34,13 @@ data Chip8 = C8 {
     st    :: ST,
     pc    :: PC,
     stack :: Stack,
-    ram   :: RAM
+    ram   :: RAM,
+    randG :: StdGen
 } deriving Show
 
 -- Construction
-mkChip8 :: Chip8
-mkChip8 = loadData c8 0x000 hexSprites  
+mkChip8 :: StdGen -> Chip8
+mkChip8 g = loadData c8 0x000 hexSprites  
   where c8 = C8 {
     regs  = M.empty, 
     i     = 0x000, 
@@ -46,11 +48,12 @@ mkChip8 = loadData c8 0x000 hexSprites
     st    = 0x00, 
     pc    = 0x000, 
     stack = [], 
-    ram   = M.empty
+    ram   = M.empty,
+    randG = g -- For opcodes which require randomness
   }
 
 -- Load program/program data in contiguous addresses
-loadData :: Chip8 -> Address -> [Word8] ->Chip8
+loadData :: Chip8 -> Address -> [Word8] -> Chip8
 loadData c8 k [] = c8
 loadData c8 k (x:xs) = loadData (setMem c8 k x) (k+1) xs
 
