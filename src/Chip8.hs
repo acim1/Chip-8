@@ -29,6 +29,8 @@ type Stack     = [Address]
 
 type Keyboard  = [Word8]
 
+type Display   = [[Word8]] -- 64 (w) x 32 (l) pixels
+
 data Chip8 = C8 {
     regs     :: Registers,
     i        :: I,
@@ -38,7 +40,8 @@ data Chip8 = C8 {
     stack    :: Stack,
     ram      :: RAM,
     randG    :: StdGen,
-    keyboard :: Keyboard
+    keyboard :: Keyboard,
+    display  :: Display
 } deriving Show
 
 -- Construction
@@ -49,11 +52,12 @@ mkChip8 g = loadData c8 0x000 hexSprites
     i        = 0x000, 
     dt       = 0x00, 
     st       = 0x00, 
-    pc       = 0x000, 
+    pc       = 0x200, -- typical program starting address
     stack    = [], 
     ram      = M.empty,
-    randG    = g, -- For opcodes which require randomness
-    keyboard = [] -- currently depressed keys
+    randG    = g, -- for opcodes which require randomness
+    keyboard = [], -- currently depressed keys
+    display  = replicate 32 $ replicate 8 0x00 -- 32 rows of 8-length lists of 8-bit units of pixels (64 bits)
   }
 
 -- Load program/program data in contiguous addresses
@@ -138,6 +142,8 @@ setKeyboard c8 xs = c8 {keyboard = xs}
 
 getKeyboard :: Chip8 -> Keyboard
 getKeyboard = keyboard
+
+-- Display...TODO
 
 -- Pre-loaded Hex Digit Sprites
 hexSprites :: [Word8]

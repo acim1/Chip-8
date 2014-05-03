@@ -1,1 +1,1 @@
-To do: Think of how to handle pixel display...some functions inside Chip8 module to assist or not?
+How to handle interrupt, waiting for key press type opcodes?
