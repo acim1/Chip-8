@@ -27,29 +27,33 @@ type PC        = Address
 
 type Stack     = [Address]
 
+type Keyboard  = [(Word8,Bool)]
+
 data Chip8 = C8 {
-    regs  :: Registers,
-    i     :: I,
-    dt    :: DT,
-    st    :: ST,
-    pc    :: PC,
-    stack :: Stack,
-    ram   :: RAM,
-    randG :: StdGen
+    regs     :: Registers,
+    i        :: I,
+    dt       :: DT,
+    st       :: ST,
+    pc       :: PC,
+    stack    :: Stack,
+    ram      :: RAM,
+    randG    :: StdGen,
+    keyboard :: Keyboard
 } deriving Show
 
 -- Construction
 mkChip8 :: StdGen -> Chip8
 mkChip8 g = loadData c8 0x000 hexSprites  
   where c8 = C8 {
-    regs  = M.empty, 
-    i     = 0x000, 
-    dt    = 0x00, 
-    st    = 0x00, 
-    pc    = 0x000, 
-    stack = [], 
-    ram   = M.empty,
-    randG = g -- For opcodes which require randomness
+    regs     = M.empty, 
+    i        = 0x000, 
+    dt       = 0x00, 
+    st       = 0x00, 
+    pc       = 0x000, 
+    stack    = [], 
+    ram      = M.empty,
+    randG    = g, -- For opcodes which require randomness
+    keyboard = zip [0x00..0x0F] (repeat False)
   }
 
 -- Load program/program data in contiguous addresses
@@ -119,6 +123,21 @@ push c8 n = c8 {stack = push' (stack c8) n}
   where
     push' xs _ | (length xs == 16) = error "Chip-8 stack can only be 16 deep"
     push' xs x = x:xs
+
+-- Random Generator
+setRandG :: Chip8 -> StdGen -> Chip8
+setRandG c8 g = c8 {randG = g}
+
+getRandG :: Chip8 -> StdGen
+getRandG = randG
+
+-- Keyboard
+
+setKeyboard :: Chip8 -> Keyboard -> Chip8
+setKeyboard c8 xs = c8 {keyboard = xs}
+
+getKeyboard :: Chip8 -> Keyboard
+getKeyboard = keyboard
 
 -- Pre-loaded Hex Digit Sprites
 hexSprites :: [Word8]
