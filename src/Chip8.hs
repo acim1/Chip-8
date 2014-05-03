@@ -27,7 +27,7 @@ type PC        = Address
 
 type Stack     = [Address]
 
-type Keyboard  = [(Word8,Bool)]
+type Keyboard  = [Word8]
 
 data Chip8 = C8 {
     regs     :: Registers,
@@ -53,7 +53,7 @@ mkChip8 g = loadData c8 0x000 hexSprites
     stack    = [], 
     ram      = M.empty,
     randG    = g, -- For opcodes which require randomness
-    keyboard = zip [0x00..0x0F] (repeat False)
+    keyboard = [] -- currently depressed keys
   }
 
 -- Load program/program data in contiguous addresses
