@@ -1,4 +1,32 @@
-module Chip8 where
+module Chip8
+( Chip8,
+  mkChip8,
+  loadData, 
+  regSet,
+  reg,
+  iSet,
+  i,
+  pcSet,
+  pc,
+  dtSet,
+  dt,
+  stSet,
+  st,
+  memSet,
+  mem,
+  peak,
+  pop,
+  push,
+  randgSet,
+  randg,
+  keyboardSet,
+  keyboard,
+  displaySet,
+  display,
+  waitingSet,
+  waiting,
+  hexSpriteAddr
+) where
 
 import Data.List
 import Data.Maybe
