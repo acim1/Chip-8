@@ -27,9 +27,11 @@ module Chip8
   waitingGet,
   hexSpriteAddr,
   -- Types
+  Byte,
   Address,
   OpCode,
-  RegN,
+  Vx,
+  Vy,
   I,
   DT,
   ST,
@@ -45,29 +47,33 @@ import Data.Word
 import Data.IntMap.Lazy as M
 import System.Random
 
+type Byte      = Word8
+
 type Address   = Word16
 
 type OpCode    = Word16
 
-type RAM       = M.IntMap Word8
+type RAM       = M.IntMap Byte
 
-type RegN      = Word8
+type Vx        = Byte
 
-type Registers = M.IntMap Word8
+type Vy        = Byte
+
+type Registers = M.IntMap Byte
 
 type I         = Address
 
-type DT        = Word8
+type DT        = Byte
 
-type ST        = Word8 
+type ST        = Byte 
 
 type PC        = Address
 
 type Stack     = [Address]
 
-type Keyboard  = [Word8]
+type Keyboard  = [Byte]
 
-type Display   = [[Word8]] -- 64 (w) x 32 (l) pixels
+type Display   = [[Byte]] -- 64 (w) x 32 (l) pixels
 
 data Chip8 = C8 {
     regs     :: Registers,
@@ -101,16 +107,16 @@ mkChip8 g = loadData c8 0x000 hexSprites
   }
 
 -- Load program/program data in contiguous addresses
-loadData :: Chip8 -> Address -> [Word8] -> Chip8
+loadData :: Chip8 -> Address -> [Byte] -> Chip8
 loadData c8 k [] = c8
 loadData c8 k (x:xs) = loadData (memSet c8 k x) (k+1) xs
 
 -- Registers
-regSet :: Chip8 -> RegN -> Word8 -> Chip8
+regSet :: Chip8 -> Vx -> Byte -> Chip8
 regSet _  k _ | k < 0x0 || k > 0xF = error "Can only update registers 0-F"
 regSet c8 k x = c8 {regs = M.insert (fromIntegral k) x (regs c8)} 
 
-regGet :: Chip8 -> RegN -> Word8
+regGet :: Chip8 -> Vx -> Byte
 regGet _  k | k < 0x0 || k > 0xF = error "Can only retrieve registers 0-F"
 regGet c8 k = M.findWithDefault 0x00 (fromIntegral k) $ regs c8
 
@@ -128,24 +134,24 @@ pcSet c8 k = c8 {pc = k}
 pcGet :: Chip8 -> PC
 pcGet = pc
 
-dtSet :: Chip8 -> Word8 -> Chip8
+dtSet :: Chip8 -> Byte -> Chip8
 dtSet c8 x = c8 {dt = x}
 
-dtGet :: Chip8 -> Word8
+dtGet :: Chip8 -> Byte
 dtGet = dt
 
-stSet :: Chip8 -> Word8 -> Chip8
+stSet :: Chip8 -> Byte -> Chip8
 stSet c8 x = c8 {st = x}
 
-stGet :: Chip8 -> Word8
+stGet :: Chip8 -> Byte
 stGet = st 
 
 -- RAM
-memSet :: Chip8 -> Address -> Word8 -> Chip8
+memSet :: Chip8 -> Address -> Byte -> Chip8
 memSet _  n _ | n < 0x000 || n > 0xFFF = error "Can only update addresses 0x000-0xFFF"
 memSet c8 n x = c8 {ram = M.insert (fromIntegral n) x (ram c8)}
 
-memGet :: Chip8 -> Address -> Word8
+memGet :: Chip8 -> Address -> Byte
 memGet _  n | n < 0x000 || n > 0xFFF = error "Can only retrieve addresses 0x000-0xFFF"
 memGet c8 n = M.findWithDefault 0x000 (fromIntegral n) $ ram c8
 
@@ -197,7 +203,7 @@ waitingGet :: Chip8 -> Bool
 waitingGet = waiting
 
 -- Pre-loaded Hex Digit Sprites
-hexSprites :: [Word8]
+hexSprites :: [Byte]
 hexSprites =   [0xF0,0x90,0x90,0x90,0xF0, -- 0
                 0x20,0x60,0x20,0x20,0x70, -- 1
                 0xF0,0x10,0xF0,0x80,0xF0, -- 2
@@ -217,7 +223,7 @@ hexSprites =   [0xF0,0x90,0x90,0x90,0xF0, -- 0
                ]
 
 -- Starting address for a given sprite               
-hexSpriteAddr :: Word8 -> Address
+hexSpriteAddr :: Byte -> Address
 hexSpriteAddr = (*5) . fromIntegral 
 
 -- Memory Addresses
