@@ -23,8 +23,8 @@ module Chip8
   keyboardGet,
   displaySet,
   displayGet,
-  waitingSet,
-  waitingGet,
+  waitSet,
+  waitGet,
   hexSpriteAddr,
   -- Types
   Byte,
@@ -86,7 +86,7 @@ data Chip8 = C8 {
     randg    :: StdGen,
     keyboard :: Keyboard,
     display  :: Display,
-    waiting  :: Bool -- waiting for input
+    wait     :: Bool -- wait for input
 } deriving Show
 
 -- Construction
@@ -103,7 +103,7 @@ mkChip8 g = loadData c8 0x000 hexSprites
     randg     = g, -- for opcodes which require randomness
     keyboard  = [], -- currently depressed keys
     display   = replicate 32 $ replicate 8 0x00, -- 32 rows of 8-length lists of 8-bit units of pixels (64 bits)
-    waiting   = False
+    wait      = False
   }
 
 -- Load program/program data in contiguous addresses
@@ -196,11 +196,11 @@ displayGet :: Chip8 -> Display
 displayGet = display
 
 -- Waiting for input
-waitingSet :: Chip8 -> Bool -> Chip8
-waitingSet c8 x = c8 {waiting = x}
+waitSet :: Chip8 -> Bool -> Chip8
+waitSet c8 x = c8 {wait = x}
 
-waitingGet :: Chip8 -> Bool
-waitingGet = waiting
+waitGet :: Chip8 -> Bool
+waitGet = wait
 
 -- Pre-loaded Hex Digit Sprites
 hexSprites :: [Byte]

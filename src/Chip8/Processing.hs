@@ -6,7 +6,7 @@ import Chip8
 import Data.Bits
 import Data.List
 import Data.Maybe
-import Control.Monad.State.Lazy
+import Control.Monad.State
 import Data.Word
 import Data.IntMap.Lazy as M
 import System.Random
@@ -118,8 +118,116 @@ decode oc = case uphi of
     n    = w8 $ 0x000F .&. oc
 
 execute :: Chip8 -> Op -> Chip8
-execute c8 op = undefined  
+execute c8 op = undefined
 
+prepExecute :: State Chip8 ()
+prepExecute = do
+    pcIncr
+    dtDecr
+    stDecr
+    waitUpdate False  
+
+-------------------------------------------------------------------------------
+-- State Update Methods
+-------------------------------------------------------------------------------
+
+-- PC
+pcIncr :: State Chip8 ()
+pcIncr = state $ \(c8) ->
+         let pc = pcGet c8
+             c8'= pcSet c8 (pc+2) 
+         in ((),c8')
+
+pcUpdate :: Address -> State Chip8 ()
+pcUpdate x = state $ \(c8) -> 
+             ((), pcSet c8 x)
+             
+pcFetch :: State Chip8 Address
+pcFetch = state $ \(c8) ->
+          (pcGet c8,c8)         
+
+-- DT
+dtDecr :: State Chip8 ()
+dtDecr = state $ \(c8) -> 
+         let dt = dtGet c8
+             c8'= if dt > 0 
+                  then dtSet c8 (dt-1)
+                  else c8
+         in ((),c8')
+
+dtUpdate :: Byte -> State Chip8 ()
+dtUpdate x = state $ \(c8) ->
+             ((),dtSet c8 x)
+
+dtFetch :: State Chip8 Byte
+dtFetch = state $ \(c8) ->
+          (dtGet c8,c8)                     
+
+-- ST               
+stDecr :: State Chip8 ()
+stDecr = state $ \(c8) -> 
+         let st = stGet c8
+             c8'= if st > 0 
+                  then stSet c8 (st-1)
+                  else c8
+         in ((),c8')
+
+stUpdate :: Byte -> State Chip8 ()
+stUpdate x = state $ \(c8) ->
+             ((),stSet c8 x)
+
+stFetch :: State Chip8 Byte
+stFetch = state $ \(c8) ->
+          (stGet c8,c8)
+
+-- I
+iUpdate :: Address -> State Chip8 ()
+iUpdate x = state $ \(c8) ->
+            ((),iSet c8 x)
+            
+iFetch :: State Chip8 Address
+iFetch = state $ \(c8) ->
+         (iGet c8,c8)    
+
+-- Stack
+stackPop :: State Chip8 Address
+stackPop = state $ \(c8) ->
+            let c8' = pop c8
+                x   = peak c8'
+            in (x,c8')
+
+stackPush :: Address -> State Chip8 ()
+stackPush x = state $ \(c8) ->
+              ((),push c8 x)
+
+-- General Purpose Registers
+regUpdate :: Vx -> Byte -> State Chip8 ()
+regUpdate k x = state $ \(c8) ->
+                ((),regSet c8 k x)
+
+regFetch :: Vx -> State Chip8 Vx
+regFetch k = state $ \(c8) ->
+             (regGet c8 k, c8)
+
+-- Memory
+memUpdate :: Address -> Byte -> State Chip8 ()
+memUpdate k x = state $ \(c8) ->
+                ((),memSet c8 k x)
+
+memFetch :: Address -> State Chip8 Byte
+memFetch k = state $ \(c8) ->
+             (memGet c8 k, c8)
+
+-- Waiting for IO
+waitUpdate :: Bool -> State Chip8 ()
+waitUpdate x = state $ \(c8) ->
+               ((), waitSet c8 x)
+
+-- Keyboard
+kbFetch :: State Chip8 Keyboard
+kbFetch = state $ \(c8) ->
+          (keyboardGet c8, c8)               
+ 
 data Op =
     SYS Address       -- 0nnn
   | CLS               -- 00E0
