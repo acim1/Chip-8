@@ -11,11 +11,12 @@ import Data.Word
 import Data.IntMap.Lazy as M
 import System.Random
 
--- Executes one Chip8 instruction cycle
+-- | Executes one Chip8 instruction cycle
 nextCycle :: Chip8 -> Chip8
 nextCycle c8 = exec . decode . fetch $ c8
-  where exec = execute c8 
+  where exec op = execState (execute op) c8 
 
+-- | Fectches opcode from current pc location
 fetch :: Chip8 -> OpCode
 fetch c8 = let pc    = pcGet c8
                byte1 = memGet c8 pc
@@ -24,6 +25,7 @@ fetch c8 = let pc    = pcGet c8
                oc'   = oc .|. (w16 byte2) 
            in oc'    
 
+-- | Translates op codes into their operations and operands
 decode :: OpCode -> Op
 decode oc = case uphi of
     0x000 ->
@@ -35,23 +37,23 @@ decode oc = case uphi of
             _      ->
                 SYS nnn
     0x1000 -> 
-        JP nnn
+        JP1 nnn
     0x2000 ->
         CALL nnn
     0x3000 -> 
-        SE x kk
+        SE1 x kk
     0x4000 ->
-        SNE x kk
+        SNE1 x kk
     0x5000 ->
-        SE1 x y 
+        SE2 x y 
     0x6000 ->
-        LD  x kk 
+        LD1  x kk 
     0x7000 ->
-        ADD x kk
+        ADD1 x kk
     0x8000 ->
         case lolo of
             0x0000 ->
-                LD1 x y
+                LD2 x y
             0x0001 ->
                 OR x y
             0x0002 ->
@@ -59,7 +61,7 @@ decode oc = case uphi of
             0x0003 ->
                 XOR x y
             0x0004 ->
-                ADD1 x y
+                ADD2 x y
             0x0005 ->
                 SUB x y
             0x0006 ->
@@ -69,11 +71,11 @@ decode oc = case uphi of
             0x000E ->
                 SHL x
     0x9000 ->
-        SNE1 x y
+        SNE2 x y
     0xA000 ->
-        LD2 nnn
+        LD3 nnn
     0xB000 ->
-        JP1 nnn
+        JP2 nnn
     0xC000 ->
         RND x kk
     0xD000 ->
@@ -87,23 +89,23 @@ decode oc = case uphi of
     0xF000 ->
         case lo of
             0x0007 ->
-                LD3 x
-            0x000A ->
                 LD4 x
-            0x0015 ->
+            0x000A ->
                 LD5 x
-            0x0018 ->
+            0x0015 ->
                 LD6 x
-            0x001E ->
-                ADD2 x
-            0x0029 ->
+            0x0018 ->
                 LD7 x
-            0x0033 ->
+            0x001E ->
+                ADD3 x
+            0x0029 ->
                 LD8 x
-            0x0055 ->
+            0x0033 ->
                 LD9 x
-            0x0065 ->
+            0x0055 ->
                 LD10 x
+            0x0065 ->
+                LD11 x
   where 
     hi   = 0xFF00 .&. oc
     uphi = 0xF000 .&. oc
@@ -117,15 +119,51 @@ decode oc = case uphi of
     kk   = w8 $ 0x00FF .&. oc
     n    = w8 $ 0x000F .&. oc
 
-execute :: Chip8 -> Op -> Chip8
-execute c8 op = undefined
-
-prepExecute :: State Chip8 ()
-prepExecute = do
+-- | Performs pre-execution maintenance and calls execute' routine to do main logic.
+execute :: Op -> State Chip8 ()
+execute op = do
     pcIncr
     dtDecr
     stDecr
-    waitUpdate False  
+    waitUpdate False
+    execute' op
+
+-- | Central logic routine
+execute' :: Op -> State Chip8 ()
+execute' op = 
+    case op of
+    --  SYS _ -> do
+    --      undefined (Ignored by modern interpreters)
+        CLS -> do
+            displayUpdate $ replicate 32 $ replicate 8 0x00
+        RET -> do
+            addr <- popStack
+            pcUpdate addr
+        JP1 addr -> do
+            pcUpdate addr
+        CALL addr -> do
+            pc <- pcFetch
+            pushStack pc
+            pcUpdate addr
+        SE1 vx byte -> do
+            x <- regFetch vx
+            when (x == byte) pcIncr
+        SNE1 vx byte -> do
+            x <- regFetch vx
+            when (x /= byte) pcIncr
+        SE2 vx vy -> do
+            x <- regFetch vx
+            y <- regFetch vy
+            when (x == y) pcIncr
+        LD1 vx byte -> do
+            regUpdate vx byte
+        ADD1 vx byte -> do
+            x <- regFetch vx
+            regUpdate vx (x+byte)    
+
+                  
+    
+      
 
 -------------------------------------------------------------------------------
 -- State Update Methods
@@ -190,14 +228,14 @@ iFetch = state $ \(c8) ->
          (iGet c8,c8)    
 
 -- Stack
-stackPop :: State Chip8 Address
-stackPop = state $ \(c8) ->
+popStack :: State Chip8 Address
+popStack = state $ \(c8) ->
             let c8' = pop c8
                 x   = peak c8'
             in (x,c8')
 
-stackPush :: Address -> State Chip8 ()
-stackPush x = state $ \(c8) ->
+pushStack :: Address -> State Chip8 ()
+pushStack x = state $ \(c8) ->
               ((),push c8 x)
 
 -- General Purpose Registers
@@ -226,44 +264,53 @@ waitUpdate x = state $ \(c8) ->
 -- Keyboard
 kbFetch :: State Chip8 Keyboard
 kbFetch = state $ \(c8) ->
-          (keyboardGet c8, c8)               
+          (keyboardGet c8, c8)
+          
+-- Display
+displayFetch :: State Chip8 Display
+displayFetch = state $ \(c8) ->
+               (displayGet c8,c8)
+               
+displayUpdate :: Display -> State Chip8 ()
+displayUpdate xs = state $ \(c8) ->
+                  ((),displaySet c8 xs)               
  
 data Op =
     SYS Address       -- 0nnn
   | CLS               -- 00E0
   | RET               -- 00EE
-  | JP Address        -- 1nnn
+  | JP1 Address       -- 1nnn
   | CALL Address      -- 2nnn
-  | SE Vx Byte        -- 3xkk
-  | SNE Vx Byte       -- 4xkk
-  | SE1 Vx Vy         -- 5xy0
-  | LD Vx Byte        -- 6xkk
-  | ADD Vx Byte       -- 7xkk
-  | LD1 Vx Vy         -- 8xy0
+  | SE1 Vx Byte       -- 3xkk
+  | SNE1 Vx Byte      -- 4xkk
+  | SE2 Vx Vy         -- 5xy0
+  | LD1 Vx Byte       -- 6xkk
+  | ADD1 Vx Byte      -- 7xkk
+  | LD2 Vx Vy         -- 8xy0
   | OR Vx Vy          -- 8xy1
   | AND Vx Vy         -- 8xy2
   | XOR Vx Vx         -- 8xy3
-  | ADD1 Vx Vy        -- 8xy4
+  | ADD2 Vx Vy        -- 8xy4
   | SUB Vx Vy         -- 8xy5
   | SHR Vx            -- 8xy6
   | SUBN Vx Vy        -- 8xy7
   | SHL Vx            -- 8xyE
-  | SNE1 Vx Vy        -- 9xy0
-  | LD2 Address       -- Annn
-  | JP1 Address       -- Bnnn
+  | SNE2 Vx Vy        -- 9xy0
+  | LD3 Address       -- Annn
+  | JP2 Address       -- Bnnn
   | RND Vx Byte       -- Cxkk
   | DRW Vx Vy Byte    -- Dxyn
   | SKP Vx            -- Ex9E
   | SKNP Vx           -- ExA1
-  | LD3 Vx            -- Fx07
-  | LD4 Vx            -- Fx0A
-  | LD5 Vx            -- Fx15
-  | LD6 Vx            -- Fx18
-  | ADD2 Vx           -- Fx1E
-  | LD7 Vx            -- Fx29
-  | LD8 Vx            -- Fx33
-  | LD9 Vx            -- Fx55
-  | LD10 Vx           -- Fx65
+  | LD4 Vx            -- Fx07
+  | LD5 Vx            -- Fx0A
+  | LD6 Vx            -- Fx15
+  | LD7 Vx            -- Fx18
+  | ADD3 Vx           -- Fx1E
+  | LD8 Vx            -- Fx29
+  | LD9 Vx            -- Fx33
+  | LD10 Vx           -- Fx55
+  | LD11 Vx           -- Fx65
           deriving (Show)
 
 w8 :: (Integral a) => a -> Word8
@@ -272,4 +319,4 @@ w8 = fromIntegral
 w16 :: (Integral a) => a -> Word16
 w16 = fromIntegral
 
--- future instructions, Can expand defs to include nibble or word pieces, i.e. LD nibble
+-- future instructions, Can expand defs to include nibble or word pieces, i.e. LD1 nibble
