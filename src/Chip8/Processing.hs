@@ -159,8 +159,45 @@ execute' op =
             regUpdate vx byte
         ADD1 vx byte -> do
             x <- regFetch vx
-            regUpdate vx (x+byte)    
-
+            regUpdate vx (x+byte)
+        LD2 vx vy -> do
+            y <- regFetch vy
+            regUpdate vx y
+        OR vx vy -> do
+            x <- regFetch vx
+            y <- regFetch vy
+            regUpdate vx $ x .|. y
+        AND vx vy -> do
+            x <- regFetch vx
+            y <- regFetch vy
+            regUpdate vx $ x .&. y
+        XOR vx vy -> do
+            x <- regFetch vx
+            y <- regFetch vy
+            regUpdate vx $ x `xor` y
+        ADD2 vx vy -> do
+            x <- regFetch vx
+            y <- regFetch vy
+            let xy = (w16 x) + (w16 y)
+            vfUpdate $ xy > 0xFF
+            regUpdate vx $ w8 xy
+        SUB vx vy -> do
+            x <- regFetch vx
+            y <- regFetch vy
+            vfUpdate $ x > y
+            regUpdate vx $ x - y
+        SHR vx -> do
+            x <- regFetch vx
+            vfUpdate $ testBit x 0
+            regUpdate vx $ shiftR x 1
+        SHL vx -> do
+            x <- regFetch vx
+            vfUpdate $ testBit x 7
+            regUpdate vx $ shiftL x 1
+        SNE2 vx vy -> do
+            x <- regFetch vx
+            y <- regFetch vy
+            when (x /= y) pcIncr
                   
     
       
@@ -246,6 +283,14 @@ regUpdate k x = state $ \(c8) ->
 regFetch :: Vx -> State Chip8 Vx
 regFetch k = state $ \(c8) ->
              (regGet c8 k, c8)
+
+-- | Updates flag register
+vfUpdate :: Bool -> State Chip8 ()
+vfUpdate p = do
+    if p
+        then regUpdate vf 0x01
+        else regUpdate vf 0x00
+  where vf = 0x0F              
 
 -- Memory
 memUpdate :: Address -> Byte -> State Chip8 ()

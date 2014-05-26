@@ -226,6 +226,10 @@ hexSprites =   [0xF0,0x90,0x90,0x90,0xF0, -- 0
 hexSpriteAddr :: Byte -> Address
 hexSpriteAddr = (*5) . fromIntegral 
 
+-------------------------------------------------------------------------------
+-- Constants
+-------------------------------------------------------------------------------
+
 -- Memory Addresses
 chip8Start, chip8End, progStart, progEnd :: Address
 -- Interpreter RAM Space
