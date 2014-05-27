@@ -198,7 +198,19 @@ execute' op =
             x <- regFetch vx
             y <- regFetch vy
             when (x /= y) pcIncr
-                  
+        LD3 addr -> do
+            iUpdate addr
+        JP2 addr -> do
+            x <- regFetch 0x00
+            pcUpdate $ addr + (w16 x)
+        RND vx byte -> do
+            g <- randgFetch
+            let (rbyte,g') = randomR (0,255) g
+            randgUpdate g'
+            regUpdate vx $ rbyte .&. byte
+        DRW vx vy nibble -> undefined     
+            
+                      
     
       
 
@@ -208,22 +220,22 @@ execute' op =
 
 -- PC
 pcIncr :: State Chip8 ()
-pcIncr = state $ \(c8) ->
+pcIncr = state $ \c8 ->
          let pc = pcGet c8
              c8'= pcSet c8 (pc+2) 
          in ((),c8')
 
 pcUpdate :: Address -> State Chip8 ()
-pcUpdate x = state $ \(c8) -> 
+pcUpdate x = state $ \c8 -> 
              ((), pcSet c8 x)
              
 pcFetch :: State Chip8 Address
-pcFetch = state $ \(c8) ->
+pcFetch = state $ \c8 ->
           (pcGet c8,c8)         
 
 -- DT
 dtDecr :: State Chip8 ()
-dtDecr = state $ \(c8) -> 
+dtDecr = state $ \c8 -> 
          let dt = dtGet c8
              c8'= if dt > 0 
                   then dtSet c8 (dt-1)
@@ -231,16 +243,16 @@ dtDecr = state $ \(c8) ->
          in ((),c8')
 
 dtUpdate :: Byte -> State Chip8 ()
-dtUpdate x = state $ \(c8) ->
+dtUpdate x = state $ \c8 ->
              ((),dtSet c8 x)
 
 dtFetch :: State Chip8 Byte
-dtFetch = state $ \(c8) ->
+dtFetch = state $ \c8 ->
           (dtGet c8,c8)                     
 
 -- ST               
 stDecr :: State Chip8 ()
-stDecr = state $ \(c8) -> 
+stDecr = state $ \c8 -> 
          let st = stGet c8
              c8'= if st > 0 
                   then stSet c8 (st-1)
@@ -248,40 +260,40 @@ stDecr = state $ \(c8) ->
          in ((),c8')
 
 stUpdate :: Byte -> State Chip8 ()
-stUpdate x = state $ \(c8) ->
+stUpdate x = state $ \c8 ->
              ((),stSet c8 x)
 
 stFetch :: State Chip8 Byte
-stFetch = state $ \(c8) ->
+stFetch = state $ \c8 ->
           (stGet c8,c8)
 
 -- I
 iUpdate :: Address -> State Chip8 ()
-iUpdate x = state $ \(c8) ->
+iUpdate x = state $ \c8 ->
             ((),iSet c8 x)
             
 iFetch :: State Chip8 Address
-iFetch = state $ \(c8) ->
+iFetch = state $ \c8 ->
          (iGet c8,c8)    
 
 -- Stack
 popStack :: State Chip8 Address
-popStack = state $ \(c8) ->
+popStack = state $ \c8 ->
             let c8' = pop c8
                 x   = peak c8'
             in (x,c8')
 
 pushStack :: Address -> State Chip8 ()
-pushStack x = state $ \(c8) ->
+pushStack x = state $ \c8 ->
               ((),push c8 x)
 
 -- General Purpose Registers
 regUpdate :: Vx -> Byte -> State Chip8 ()
-regUpdate k x = state $ \(c8) ->
+regUpdate k x = state $ \c8 ->
                 ((),regSet c8 k x)
 
 regFetch :: Vx -> State Chip8 Vx
-regFetch k = state $ \(c8) ->
+regFetch k = state $ \c8 ->
              (regGet c8 k, c8)
 
 -- | Updates flag register
@@ -294,31 +306,40 @@ vfUpdate p = do
 
 -- Memory
 memUpdate :: Address -> Byte -> State Chip8 ()
-memUpdate k x = state $ \(c8) ->
+memUpdate k x = state $ \c8 ->
                 ((),memSet c8 k x)
 
 memFetch :: Address -> State Chip8 Byte
-memFetch k = state $ \(c8) ->
+memFetch k = state $ \c8 ->
              (memGet c8 k, c8)
 
--- Waiting for IO
+-- Waiting for Input
 waitUpdate :: Bool -> State Chip8 ()
-waitUpdate x = state $ \(c8) ->
+waitUpdate x = state $ \c8 ->
                ((), waitSet c8 x)
 
 -- Keyboard
 kbFetch :: State Chip8 Keyboard
-kbFetch = state $ \(c8) ->
+kbFetch = state $ \c8 ->
           (keyboardGet c8, c8)
           
 -- Display
 displayFetch :: State Chip8 Display
-displayFetch = state $ \(c8) ->
+displayFetch = state $ \c8 ->
                (displayGet c8,c8)
                
 displayUpdate :: Display -> State Chip8 ()
-displayUpdate xs = state $ \(c8) ->
-                  ((),displaySet c8 xs)               
+displayUpdate xs = state $ \c8 ->
+                  ((),displaySet c8 xs)
+                  
+-- Randomness
+randgFetch :: State Chip8 StdGen
+randgFetch = state $ \c8 ->
+             (randgGet c8, c8)
+             
+randgUpdate :: StdGen -> State Chip8 ()
+randgUpdate g = state $ \c8 ->
+                ((),randgSet c8 g)               
  
 data Op =
     SYS Address       -- 0nnn
