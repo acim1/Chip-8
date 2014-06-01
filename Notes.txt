@@ -1,1 +1,8 @@
-How to handle interrupt, waiting for key press type opcodes?
+Upcoming: Display Updating
+
+Strategy for display updates:
+-Read bytes for xoring from memory, zipWith some kind of test bit function to get a list of bools for updating starting at pos x,y
+-Save result in list as a record in c8
+-IO section will read list, make updates from that cycle to mutable IO array representing pixels, update VF on collision (c8 updated with VF status and injected into next cycle)
+
+
