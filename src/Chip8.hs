@@ -4,6 +4,8 @@ module Chip8
   loadData, 
   regSet,
   regGet,
+  vfSet,
+  vfGet,
   iSet,
   iGet,
   pcSet,
@@ -38,7 +40,11 @@ module Chip8
   PC,
   Stack,
   Keyboard,
-  Display  
+  X,
+  Y,
+  Pixel,
+  Sprite,
+  Draw (..)
 ) where
 
 import Data.List
@@ -73,7 +79,15 @@ type Stack     = [Address]
 
 type Keyboard  = [Byte]
 
-type Display   = [[Byte]] -- 64 (w) x 32 (l) pixels
+type X         = Integer
+
+type Y         = Integer
+
+type Pixel     = Bool
+
+type Sprite    = ((X,Y),[Pixel])
+
+data Draw      = Clear | Draw (Maybe Sprite) deriving (Show)
 
 data Chip8 = C8 {
     regs     :: Registers,
@@ -85,7 +99,7 @@ data Chip8 = C8 {
     ram      :: RAM,
     randg    :: StdGen,
     keyboard :: Keyboard,
-    display  :: Display,
+    display  :: Draw,
     wait     :: Bool -- wait for input
 } deriving Show
 
@@ -102,7 +116,7 @@ mkChip8 g = loadData c8 0x000 hexSprites
     ram       = M.empty,
     randg     = g, -- for opcodes which require randomness
     keyboard  = [], -- currently depressed keys
-    display   = replicate 32 $ replicate 8 0x00, -- 32 rows of 8-length lists of 8-bit units of pixels (64 bits)
+    display   = Draw Nothing,
     wait      = False
   }
 
@@ -119,6 +133,12 @@ regSet c8 k x = c8 {regs = M.insert (fromIntegral k) x (regs c8)}
 regGet :: Chip8 -> Vx -> Byte
 regGet _  k | k < 0x0 || k > 0xF = error "Can only retrieve registers 0-F"
 regGet c8 k = M.findWithDefault 0x00 (fromIntegral k) $ regs c8
+
+vfSet :: Chip8 -> Byte -> Chip8
+vfSet c8 x = regSet c8 0xF x
+
+vfGet :: Chip8 -> Byte
+vfGet c8 = regGet c8 0xF
 
 
 -- Special Registers
@@ -189,10 +209,10 @@ keyboardGet :: Chip8 -> Keyboard
 keyboardGet = keyboard
 
 -- Display
-displaySet :: Chip8 -> Display -> Chip8
-displaySet c8 xs = c8 {display = xs}
+displaySet :: Chip8 -> Draw -> Chip8
+displaySet c8 x = c8 {display = x}
 
-displayGet :: Chip8 -> Display
+displayGet :: Chip8 -> Draw
 displayGet = display
 
 -- Waiting for input

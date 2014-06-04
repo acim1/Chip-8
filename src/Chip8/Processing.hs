@@ -126,6 +126,7 @@ execute op = do
     dtDecr
     stDecr
     waitUpdate False
+    displayUpdate $ Draw Nothing
     execute' op
 
 -- | Central logic routine
@@ -135,7 +136,7 @@ execute' op =
     --  SYS _ -> do
     --      undefined (Ignored by modern interpreters)
         CLS -> do
-            displayUpdate $ replicate 32 $ replicate 8 0x00
+            displayUpdate Clear
         RET -> do
             addr <- popStack
             pcUpdate addr
@@ -302,7 +303,7 @@ vfUpdate p = do
     if p
         then regUpdate vf 0x01
         else regUpdate vf 0x00
-  where vf = 0x0F              
+  where vf = 0xF              
 
 -- Memory
 memUpdate :: Address -> Byte -> State Chip8 ()
@@ -324,13 +325,9 @@ kbFetch = state $ \c8 ->
           (keyboardGet c8, c8)
           
 -- Display
-displayFetch :: State Chip8 Display
-displayFetch = state $ \c8 ->
-               (displayGet c8,c8)
-               
-displayUpdate :: Display -> State Chip8 ()
-displayUpdate xs = state $ \c8 ->
-                  ((),displaySet c8 xs)
+displayUpdate :: Draw -> State Chip8 ()
+displayUpdate x = state $ \c8 ->
+                  ((),displaySet c8 x)
                   
 -- Randomness
 randgFetch :: State Chip8 StdGen
