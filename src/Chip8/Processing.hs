@@ -209,9 +209,12 @@ execute' op =
             let (rbyte,g') = randomR (0,255) g
             randgUpdate g'
             regUpdate vx $ rbyte .&. byte
-        DRW vx vy nibble -> undefined     
-            
-                      
+        DRW vx vy n -> do
+            let x = fromIntegral vx
+            let y = fromIntegral vy
+            i      <- iFetch
+            pixels <- drawFrom i n
+            displayUpdate (Draw $ Just ((x,y),pixels))
     
       
 
@@ -328,6 +331,17 @@ kbFetch = state $ \c8 ->
 displayUpdate :: Draw -> State Chip8 ()
 displayUpdate x = state $ \c8 ->
                   ((),displaySet c8 x)
+
+drawFrom :: Address -> Byte -> State Chip8 [Pixel]
+drawFrom addr n = state $ \c8 ->
+                  (getPixels c8 addr n, c8)
+
+getPixels :: Chip8 -> Address -> Byte -> [Pixel]
+getPixels c8 addr n = concat [byte2Pixels $ memGet c8 (addr + k) | k <- [0..(n'-1)]] 
+  where
+    n' = w16 n
+    byte2Pixels byte = zipWith testBit (repeat byte) [0..7]  
+ 
                   
 -- Randomness
 randgFetch :: State Chip8 StdGen
