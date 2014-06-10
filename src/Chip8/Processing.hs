@@ -337,10 +337,12 @@ drawFrom addr n = state $ \c8 ->
                   (getPixels c8 addr n, c8)
 
 getPixels :: Chip8 -> Address -> Byte -> [Pixel]
+getPixels c8 addr 0 = []
 getPixels c8 addr n = concat [byte2Pixels $ memGet c8 (addr + k) | k <- [0..(n'-1)]] 
   where
     n' = w16 n
-    byte2Pixels byte = zipWith testBit (repeat byte) [0..7]  
+    byte2Pixels byte = zipWith testBit (repeat byte) lilEndianBits
+    lilEndianBits = reverse [0..7]  
  
                   
 -- Randomness
