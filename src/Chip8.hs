@@ -79,9 +79,9 @@ type Stack     = [Address]
 
 type Keyboard  = [Byte]
 
-type X         = Integer
+type X         = Int
 
-type Y         = Integer
+type Y         = Int
 
 type Pixel     = Bool
 

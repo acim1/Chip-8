@@ -210,12 +210,19 @@ execute' op =
             randgUpdate g'
             regUpdate vx $ rbyte .&. byte
         DRW vx vy n -> do
-            let x = fromIntegral vx
-            let y = fromIntegral vy
+            x <- regFetch vx
+            y <- regFetch vy
             i      <- iFetch
             pixels <- drawFrom i n
-            displayUpdate (Draw $ Just ((x,y),pixels))
-    
+            displayUpdate (Draw $ Just ((int x, int y),pixels))
+        SKP vx -> do
+            x  <- regFetch vx
+            kb <- kbFetch
+            when (elem x kb) pcIncr
+        SKNP vx -> do
+            x  <- regFetch vx
+            kb <- kbFetch
+            when (notElem x kb) pcIncr
       
 
 -------------------------------------------------------------------------------
@@ -397,5 +404,9 @@ w8 = fromIntegral
 
 w16 :: (Integral a) => a -> Word16
 w16 = fromIntegral
+
+int :: (Integral a) => a -> Int
+int = fromIntegral
+
 
 -- future instructions, Can expand defs to include nibble or word pieces, i.e. LD1 nibble
