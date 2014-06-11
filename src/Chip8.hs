@@ -85,7 +85,7 @@ type Y         = Int
 
 type Pixel     = Bool
 
-type Sprite    = ((X,Y),[Pixel])
+type Sprite    = ((X,Y),[[Pixel]])
 
 data Draw      = Clear | Draw (Maybe Sprite) deriving (Show)
 

@@ -214,7 +214,7 @@ execute' op =
             y <- regFetch vy
             i      <- iFetch
             pixels <- drawFrom i n
-            displayUpdate (Draw $ Just ((int x, int y),pixels))
+            displayUpdate $ Draw $ Just ((int x, int y),pixels)
         SKP vx -> do
             x  <- regFetch vx
             kb <- kbFetch
@@ -339,13 +339,13 @@ displayUpdate :: Draw -> State Chip8 ()
 displayUpdate x = state $ \c8 ->
                   ((),displaySet c8 x)
 
-drawFrom :: Address -> Byte -> State Chip8 [Pixel]
+drawFrom :: Address -> Byte -> State Chip8 [[Pixel]]
 drawFrom addr n = state $ \c8 ->
                   (getPixels c8 addr n, c8)
 
-getPixels :: Chip8 -> Address -> Byte -> [Pixel]
+getPixels :: Chip8 -> Address -> Byte -> [[Pixel]]
 getPixels c8 addr 0 = []
-getPixels c8 addr n = concat [byte2Pixels $ memGet c8 (addr + k) | k <- [0..(n'-1)]] 
+getPixels c8 addr n = [byte2Pixels $ memGet c8 (addr + k) | k <- [0..(n'-1)]] 
   where
     n' = w16 n
     byte2Pixels byte = zipWith testBit (repeat byte) lilEndianBits
