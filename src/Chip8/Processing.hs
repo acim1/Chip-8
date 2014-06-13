@@ -125,7 +125,7 @@ execute op = do
     pcIncr
     dtDecr
     stDecr
-    waitUpdate False
+    waitUpdate Nothing
     displayUpdate $ Draw Nothing
     execute' op
 
@@ -215,6 +215,7 @@ execute' op =
             i      <- iFetch
             pixels <- drawFrom i n
             displayUpdate $ Draw $ Just ((int x, int y),pixels)
+            -- VF collision update handled IO side
         SKP vx -> do
             x  <- regFetch vx
             kb <- kbFetch
@@ -223,6 +224,20 @@ execute' op =
             x  <- regFetch vx
             kb <- kbFetch
             when (notElem x kb) pcIncr
+        LD4 vx -> do
+            dt <- dtFetch
+            regUpdate vx dt
+        LD5 vx -> do
+            waitUpdate $ Just vx
+            -- Register set to waited for key press handled IO side
+        LD6 vx -> do
+            x <- regFetch vx
+            dtUpdate x
+        LD7 vx -> do
+            x <- regFetch vx
+            stUpdate x
+        ADD3 vx -> do
+            undefined
       
 
 -------------------------------------------------------------------------------
@@ -283,7 +298,7 @@ iUpdate :: Address -> State Chip8 ()
 iUpdate x = state $ \c8 ->
             ((),iSet c8 x)
             
-iFetch :: State Chip8 Address
+iFetch :: State Chip8 I
 iFetch = state $ \c8 ->
          (iGet c8,c8)    
 
@@ -325,7 +340,7 @@ memFetch k = state $ \c8 ->
              (memGet c8 k, c8)
 
 -- Waiting for Input
-waitUpdate :: Bool -> State Chip8 ()
+waitUpdate :: Maybe Vx -> State Chip8 ()
 waitUpdate x = state $ \c8 ->
                ((), waitSet c8 x)
 
@@ -335,7 +350,7 @@ kbFetch = state $ \c8 ->
           (keyboardGet c8, c8)
           
 -- Display
-displayUpdate :: Draw -> State Chip8 ()
+displayUpdate :: Display -> State Chip8 ()
 displayUpdate x = state $ \c8 ->
                   ((),displaySet c8 x)
 

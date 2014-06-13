@@ -44,9 +44,10 @@ module Chip8
   Y,
   Pixel,
   Sprite,
-  Draw (..)
+  Display (..)
 ) where
 
+import Control.Monad.State
 import Data.List
 import Data.Maybe
 import Data.Word
@@ -87,7 +88,7 @@ type Pixel     = Bool
 
 type Sprite    = ((X,Y),[[Pixel]])
 
-data Draw      = Clear | Draw (Maybe Sprite) deriving (Show)
+data Display      = Clear | Draw (Maybe Sprite) deriving (Show)
 
 data Chip8 = C8 {
     regs     :: Registers,
@@ -99,9 +100,9 @@ data Chip8 = C8 {
     ram      :: RAM,
     randg    :: StdGen,
     keyboard :: Keyboard,
-    display  :: Draw,
-    wait     :: Bool -- wait for input
-} deriving Show
+    display  :: Display,
+    wait     :: Maybe Vx
+} deriving (Show) 
 
 -- Construction
 mkChip8 :: StdGen -> Chip8
@@ -117,7 +118,7 @@ mkChip8 g = loadData c8 0x000 hexSprites
     randg     = g, -- for opcodes which require randomness
     keyboard  = [], -- currently depressed keys
     display   = Draw Nothing,
-    wait      = False
+    wait      = Nothing
   }
 
 -- Load program/program data in contiguous addresses
@@ -209,17 +210,17 @@ keyboardGet :: Chip8 -> Keyboard
 keyboardGet = keyboard
 
 -- Display
-displaySet :: Chip8 -> Draw -> Chip8
+displaySet :: Chip8 -> Display -> Chip8
 displaySet c8 x = c8 {display = x}
 
-displayGet :: Chip8 -> Draw
+displayGet :: Chip8 -> Display
 displayGet = display
 
 -- Waiting for input
-waitSet :: Chip8 -> Bool -> Chip8
+waitSet :: Chip8 -> Maybe Vx -> Chip8
 waitSet c8 x = c8 {wait = x}
 
-waitGet :: Chip8 -> Bool
+waitGet :: Chip8 -> Maybe Vx
 waitGet = wait
 
 -- Pre-loaded Hex Digit Sprites
