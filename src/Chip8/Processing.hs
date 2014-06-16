@@ -237,8 +237,31 @@ execute' op =
             x <- regFetch vx
             stUpdate x
         ADD3 vx -> do
+            x <- regFetch vx
+            i <- iFetch
+            iUpdate $ i + (w16 x)
+        LD8 vx -> do
+            x <- regFetch vx
+            iUpdate $ hexSpriteAddr x
+        LD9 vx -> do
+            x <- regFetch vx
+            let (hdrs,r0)  = vx `divMod` 100
+            let (tens,r1)  = r0 `divMod` 10
+            let  ones      = r1
+            i <- iFetch
+            memUpdate i hdrs
+            memUpdate (i+1) tens
+            memUpdate (i+2) ones
+        LD10 vx -> do
+            i <- iFetch
+            foldM_ 
+                (\i' vy -> do {y <- regFetch vy; memUpdate i' y; return (i'+1);}) 
+                i 
+                [0x0..vx]
+        LD11 vx -> do
             undefined
-      
+
+             
 
 -------------------------------------------------------------------------------
 -- State Update Methods
