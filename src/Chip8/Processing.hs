@@ -259,7 +259,11 @@ execute' op =
                 i 
                 [0x0..vx]
         LD11 vx -> do
-            undefined
+            i <- iFetch
+            foldM_ 
+                (\i' vy -> do {y <- memFetch i'; regUpdate vy y; return (i'+1);}) 
+                i 
+                [0x0..vx]
 
              
 
