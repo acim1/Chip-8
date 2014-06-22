@@ -1,14 +1,14 @@
 module Chip8.Processing
-(
+( nextCycle
 ) where
 
 import Chip8
+import Control.Monad.State
 import Data.Bits
+import Data.IntMap.Lazy as M
 import Data.List
 import Data.Maybe
-import Control.Monad.State
 import Data.Word
-import Data.IntMap.Lazy as M
 import System.Random
 
 -- | Executes one Chip8 instruction cycle

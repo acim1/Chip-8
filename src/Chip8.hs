@@ -92,7 +92,7 @@ type Pixel     = Bool
 
 type Sprite    = ((X,Y),[[Pixel]])
 
-data Display      = Clear | Draw (Maybe Sprite) deriving (Show)
+data Display   = Clear | Draw (Maybe Sprite) deriving (Show)
 
 data Chip8 = C8 {
     regs     :: Registers,
