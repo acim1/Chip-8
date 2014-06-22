@@ -44,7 +44,11 @@ module Chip8
   Y,
   Pixel,
   Sprite,
-  Display (..)
+  Display (..),
+  -- Conversion helpers
+  w8,
+  w16,
+  int
 ) where
 
 import Control.Monad.State
@@ -259,4 +263,17 @@ chip8End   = 0x1FF
 -- Program RAM Space
 progStart  = 0x200
 progEnd    = 0xFFF
+
+-------------------------------------------------------------------------------
+-- Helpers
+-------------------------------------------------------------------------------
+
+w8 :: (Integral a) => a -> Word8
+w8 = fromIntegral
+
+w16 :: (Integral a) => a -> Word16
+w16 = fromIntegral
+
+int :: (Integral a) => a -> Int
+int = fromIntegral
 

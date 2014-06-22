@@ -441,14 +441,5 @@ data Op =
   | LD11 Vx           -- Fx65
           deriving (Show)
 
-w8 :: (Integral a) => a -> Word8
-w8 = fromIntegral
-
-w16 :: (Integral a) => a -> Word16
-w16 = fromIntegral
-
-int :: (Integral a) => a -> Int
-int = fromIntegral
-
 
 -- future instructions, Can expand defs to include nibble or word pieces, i.e. LD1 nibble
