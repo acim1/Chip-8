@@ -1,8 +1,18 @@
-Upcoming: Display Updating
+*Upcoming: Display Updating
 
 Strategy for display updates:
 -Read bytes for xoring from memory, zipWith some kind of test bit function to get a list of bools for updating starting at pos x,y
 -Save result in list as a record in c8
 -IO section will read list, make updates from that cycle to mutable IO array representing pixels, update VF on collision (c8 updated with VF status and injected into next cycle)
 
+*Notes on Clock Speed, via Wikipedia (Chip-8 originall ran on Cosmac VIP, 1.76 MHz actual instruction speed for machine running Chip-8 VM, 60 hz refresh rate expected for Chip-8 display):
 
+The COSMAC VIP (1977) was an early microcomputer that was aimed at video games. Essentially a COSMAC ELF with a supplementary CDP1861/CDP1864 video display chip. For a price of US$275, it could be purchased from RCA by mail order. It came in kit form, and had to be assembled. Its dimensions were 22 x 28 cm, and it had a RCA 1802 processor; along with a crystal clock operating at 1.76 MHz (3.521280 MHz divided by 2). It had 2 KB (2048 bytes) of RAM, which could be expanded to 4 KB on board, and 32 KB via an expansion slot. Its 5V DC CDP18S023 power supply had an output of 600 mA. I/O ports could be added to connect to sensors, interface relays, an ASCII keyboard, or a printer.
+
+*Notes on key presses:
+
+I'm wondering, how are you going to properly impliment keyboard input. Keyboard input in CC is like DOS.
+holding a key = first key, then delay, then a whole lotta keys
+
+Where in chip-8, the input is expected to be like:
+holding a key = key stays down. 
