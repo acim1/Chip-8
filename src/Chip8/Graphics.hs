@@ -22,8 +22,7 @@ mkPixelArray :: IO PixelArr
 mkPixelArray = newListArray displayDimensions (repeat False)
 
 -- debug
-prntArr :: IO PixelArr -> IO ()
+prntArr :: PixelArr -> IO ()
 prntArr arr = do
-    arr'   <- arr
-    assocs <- getAssocs arr'
+    assocs <- getAssocs arr
     putStrLn $ show assocs
