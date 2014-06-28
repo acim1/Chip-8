@@ -43,6 +43,7 @@ module Chip8
   X,
   Y,
   Pixel,
+  PixelByte,
   Sprite,
   Display (..),
   -- Conversion helpers
@@ -90,7 +91,9 @@ type Y         = Int
 
 type Pixel     = Bool
 
-type Sprite    = ((X,Y),[[Pixel]])
+type PixelByte = [Pixel]
+
+type Sprite    = ((X,Y),[PixelByte])
 
 data Display   = Clear | Draw (Maybe Sprite) deriving (Show)
 

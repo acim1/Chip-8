@@ -381,11 +381,11 @@ displayUpdate :: Display -> State Chip8 ()
 displayUpdate x = state $ \c8 ->
                   ((),displaySet c8 x)
 
-drawFrom :: Address -> Byte -> State Chip8 [[Pixel]]
+drawFrom :: Address -> Byte -> State Chip8 [PixelByte]
 drawFrom addr n = state $ \c8 ->
                   (getPixels c8 addr n, c8)
 
-getPixels :: Chip8 -> Address -> Byte -> [[Pixel]]
+getPixels :: Chip8 -> Address -> Byte -> [PixelByte]
 getPixels c8 addr 0 = []
 getPixels c8 addr n = [byte2Pixels $ memGet c8 (addr + k) | k <- [0..(n'-1)]] 
   where
