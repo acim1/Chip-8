@@ -136,11 +136,11 @@ loadData c8 k (x:xs) = loadData (memSet c8 k x) (k+1) xs
 -- Registers
 regSet :: Chip8 -> Vx -> Byte -> Chip8
 regSet _  k _ | k < 0x0 || k > 0xF = error "Can only update registers 0-F"
-regSet c8 k x = c8 {regs = M.insert (fromIntegral k) x (regs c8)} 
+regSet c8 k x = c8 {regs = M.insert (int k) x (regs c8)} 
 
 regGet :: Chip8 -> Vx -> Byte
 regGet _  k | k < 0x0 || k > 0xF = error "Can only retrieve registers 0-F"
-regGet c8 k = M.findWithDefault 0x00 (fromIntegral k) $ regs c8
+regGet c8 k = M.findWithDefault 0x00 (int k) $ regs c8
 
 vfSet :: Chip8 -> Byte -> Chip8
 vfSet c8 x = regSet c8 0xF x
@@ -177,11 +177,11 @@ stGet = st
 -- RAM
 memSet :: Chip8 -> Address -> Byte -> Chip8
 memSet _  n _ | n < 0x000 || n > 0xFFF = error "Can only update addresses 0x000-0xFFF"
-memSet c8 n x = c8 {ram = M.insert (fromIntegral n) x (ram c8)}
+memSet c8 n x = c8 {ram = M.insert (int n) x (ram c8)}
 
 memGet :: Chip8 -> Address -> Byte
 memGet _  n | n < 0x000 || n > 0xFFF = error "Can only retrieve addresses 0x000-0xFFF"
-memGet c8 n = M.findWithDefault 0x000 (fromIntegral n) $ ram c8
+memGet c8 n = M.findWithDefault 0x000 (int n) $ ram c8
 
 -- Stack
 peak :: Chip8 -> Address
@@ -252,7 +252,7 @@ hexSprites =   [0xF0,0x90,0x90,0x90,0xF0, -- 0
 
 -- Starting address for a given sprite               
 hexSpriteAddr :: Byte -> Address
-hexSpriteAddr = (*5) . fromIntegral 
+hexSpriteAddr = (*5) . w16 
 
 -------------------------------------------------------------------------------
 -- Constants
