@@ -64,18 +64,28 @@ prntArr arr = do
 
 
 showDisplay :: PixelArr -> IO ()
-showDisplay arr = animate (InWindow "Chip-8" (640,320) (0,0))
-    black (pixelPicture arr)
+showDisplay arr = do
+    picture <- pixelPicture arr
+    display (InWindow "Chip-8" (640,320) (0,0)) black picture
 
--- TODO: Flesh out to render array...
-pixelPicture :: PixelArr -> Float -> Picture
-pixelPicture arr t = plotPixel (63,31) mkPixel
+pixelPicture :: PixelArr -> IO Picture
+pixelPicture arr = liftM pictures $
+    foldM (\pxs (x,y) -> do
+               b <- readArray arr (y,x)
+               if b
+                   then return $ (pixel (x,y)) : pxs
+                   else return pxs
+          )
+    [] [(x,y) | y <- [0..31], x <- [0..63]]
 
--- | "Moves" one 10 x 10 pixel, centered about the origin to a location
+-- pictures [plotPixel (63,31) pixel, plotPixel (0,0) pixel]
+     
+
+-- | Places one 10 x 10 pixel, centered about the origin to a location
 --   on the 64 x 32 (640 x 320) Chip8 display
-plotPixel :: (X,Y) -> Picture -> Picture
-plotPixel (x,y) px = 
-    translate (float $ adjust x 32) (float $ negate (adjust y 16)) px
+pixel :: (X,Y) -> Picture
+pixel (x,y)  = 
+    translate (float $ adjust x 32) (float $ negate (adjust y 16)) newPixel
   where
     float = fromIntegral
     adjust q r 
@@ -83,13 +93,13 @@ plotPixel (x,y) px =
         | otherwise = (q * 10) - (r * 10) + 5
 
 -- | Makes one 10 x 10 green pixel, centered about the origin
-mkPixel :: Picture
-mkPixel = color green $ rectangleSolid 10 10
+newPixel :: Picture
+newPixel = color green $ rectangleSolid 10 10
 
 -- how to put a 10 x 10 pixel in the upper corner
 -- color green $ translate (-315) 155 $ rectangleSolid 10 10
 
 --debug
-main = mkPixelArray >>= showDisplay
+main = (newListArray displayDimensions (cycle [True,True,False])) >>= showDisplay
     
     
