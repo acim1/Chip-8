@@ -72,7 +72,7 @@ pixelPicture :: PixelArr -> Float -> Picture
 pixelPicture arr t = plotPixel (63,31) mkPixel
 
 -- | "Moves" one 10 x 10 pixel, centered about the origin to a location
---   on the 64 x 32 Chip8 display
+--   on the 64 x 32 (640 x 320) Chip8 display
 plotPixel :: (X,Y) -> Picture -> Picture
 plotPixel (x,y) px = 
     translate (float $ adjust x 32) (float $ negate (adjust y 16)) px
