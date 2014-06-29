@@ -16,3 +16,6 @@ holding a key = first key, then delay, then a whole lotta keys
 
 Where in chip-8, the input is expected to be like:
 holding a key = key stays down. 
+
+*UPCOMING*
+Need to look into how to render multiple pictures (pixels) with gloss.
