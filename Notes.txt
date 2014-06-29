@@ -18,4 +18,7 @@ Where in chip-8, the input is expected to be like:
 holding a key = key stays down. 
 
 *UPCOMING*
-Need to look into how to render multiple pictures (pixels) with gloss.
+
+Need to use Gloss.IO packages to create pictures in impure environment, e.g. animateIO. Need to develop strategy to run Chip8 as "game",
+perhaps using Gloss's (again, impure) game functions, which can handle input etc. On that, might rename Graphics module to IO module if
+the two are going to be intertwined enough.
