@@ -1,4 +1,4 @@
-module Chip8.Processing where
+module Chip8.Debug.Processing where
 
 import Chip8
 import Control.Monad.State
