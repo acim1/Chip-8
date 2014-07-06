@@ -12,7 +12,11 @@ import System.Random
 -- | Executes one Chip8 instruction cycle
 nextCycle :: Chip8 -> Chip8
 nextCycle c8 = exec . decode . fetch $ c8
-  where exec op = execState (execute op) c8 
+  where exec op = execState (execute op) c8
+  
+nextCycleST :: State Chip8 ()
+nextCycleST = state $ \c8 -> 
+              ((),nextCycle c8)
 
 -- | Fectches opcode from current pc location
 fetch :: Chip8 -> OpCode
@@ -378,6 +382,10 @@ kbFetch = state $ \c8 ->
 displayUpdate :: Display -> State Chip8 ()
 displayUpdate x = state $ \c8 ->
                   ((),displaySet c8 x)
+
+displayFetch :: State Chip8 Display
+displayFetch = state $ \c8 ->
+               (displayGet c8, c8) 
 
 drawFrom :: Address -> Byte -> State Chip8 [PixelByte]
 drawFrom addr n = state $ \c8 ->

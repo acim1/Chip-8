@@ -1,6 +1,4 @@
-module Chip8.Graphics
-(
-) where
+module Chip8.Graphics where
 
 import Chip8
 import Control.Monad
