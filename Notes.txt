@@ -19,6 +19,10 @@ holding a key = key stays down.
 
 *UPCOMING*
 
-Need to use Gloss.IO packages to create pictures in impure environment, e.g. animateIO. Need to develop strategy to run Chip8 as "game",
+--Need to use Gloss.IO packages to create pictures in impure environment, e.g. animateIO. Need to develop strategy to run Chip8 as "game",
 perhaps using Gloss's (again, impure) game functions, which can handle input etc. On that, might rename Graphics module to IO module if
 the two are going to be intertwined enough.
+
+--Make method in Graphics module that will take Display object and do whatever is appropriate: Clear, Draw (Maybe Sprite), whatever. Single method for all drawing purposes.
+
+
