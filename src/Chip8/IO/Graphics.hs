@@ -1,4 +1,4 @@
-module Chip8.Graphics where
+module Chip8.IO.Graphics where
 
 import Chip8
 import Control.Monad
@@ -7,6 +7,10 @@ import Data.Bits
 import Data.List
 import Data.Maybe
 import Graphics.Gloss
+
+-------------------------------------------------------------------------------
+-- Primary Types and Functions
+-------------------------------------------------------------------------------
 
 type Dimensions = ((Y,X),(Y,X))
 type PixelArr   = IOArray (Int,Int) Pixel
@@ -41,30 +45,24 @@ writePixelByte arr (x,y) pxs =
 
 -- | Writes as (y,x) or reversed, as y represents the row
 writePixelBit :: PixelArr -> (X,Y) -> Pixel -> IO Bool
-writePixelBit arr (x,y) b = do
-    b' <- readArray arr (y,x)
-    let collision = b' && not b
-    writeArray arr (y,x) b
-    return collision
-    
+writePixelBit arr (x,y) newpx = do
+    oldpx <- readArray arr (y,x)
+    let px = bxor newpx oldpx
+    writeArray arr (y,x) px
+    return $ oldpx && newpx -- collision
+
+-------------------------------------------------------------------------------
+-- Helper Functions
+-------------------------------------------------------------------------------
+
+bxor :: Bool -> Bool -> Bool
+bxor = (/=)    
 
 wrapx :: X -> X
 wrapx x = x `mod` 64
 
 wrapy :: Y -> Y
 wrapy y = y `mod` 32
-
--- debug
-prntArr :: PixelArr -> IO ()
-prntArr arr = do
-    assocs <- getAssocs arr
-    putStrLn $ show assocs
-
-
-showDisplay :: PixelArr -> IO ()
-showDisplay arr = do
-    picture <- pixelPicture arr
-    display (InWindow "Chip-8" (640,320) (0,0)) black picture
 
 pixelPicture :: PixelArr -> IO Picture
 pixelPicture arr = liftM pictures $
@@ -76,11 +74,9 @@ pixelPicture arr = liftM pictures $
           )
     [] [(x,y) | y <- [0..31], x <- [0..63]]
 
--- pictures [plotPixel (63,31) pixel, plotPixel (0,0) pixel]
      
 
--- | Places one 10 x 10 pixel, centered about the origin to a location
---   on the 64 x 32 (640 x 320) Chip8 display
+-- | Places one 10 x 10 pixel, centered about the origin to a location on the 64 x 32 (640 x 320) Chip8 display
 pixel :: (X,Y) -> Picture
 pixel (x,y)  = 
     translate (float $ adjust x 32) (float $ negate (adjust y 16)) newPixel
@@ -94,10 +90,31 @@ pixel (x,y)  =
 newPixel :: Picture
 newPixel = color green $ rectangleSolid 10 10
 
+-------------------------------------------------------------------------------
+-- Debug
+-------------------------------------------------------------------------------
+
+prntArr :: PixelArr -> IO ()
+prntArr arr = do
+    assocs <- getAssocs arr
+    putStrLn $ show assocs
+
+
+showDisplay :: PixelArr -> IO ()
+showDisplay arr = do
+    picture <- pixelPicture arr
+    display (InWindow "Chip-8" (640,320) (0,0)) black picture
+
+
+main = (newListArray displayDimensions (cycle [True,True,False])) >>= showDisplay
+
+-------------------------------------------------------------------------------
+-- Commented Out Example Code
+-------------------------------------------------------------------------------
+
+-- pictures [plotPixel (63,31) pixel, plotPixel (0,0) pixel]
+
 -- how to put a 10 x 10 pixel in the upper corner
 -- color green $ translate (-315) 155 $ rectangleSolid 10 10
 
---debug
-main = (newListArray displayDimensions (cycle [True,True,False])) >>= showDisplay
-    
-    
+   
