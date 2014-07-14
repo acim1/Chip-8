@@ -13,7 +13,7 @@ import Graphics.Gloss
 -------------------------------------------------------------------------------
 
 type Dimensions = ((Y,X),(Y,X))
-type PixelArr   = IOArray (Int,Int) Pixel
+type PixelArray   = IOArray (Int,Int) Pixel
 
 yLo,xLo,yHi,xHi :: Int
 ((yLo,xLo),(yHi,xHi)) = ((0,0),(31,63))
@@ -21,13 +21,13 @@ yLo,xLo,yHi,xHi :: Int
 displayDimensions :: Dimensions
 displayDimensions = ((yLo,xLo),(yHi,xHi))
 
-mkPixelArray :: IO PixelArr
+mkPixelArray :: IO PixelArray
 mkPixelArray = newListArray displayDimensions (repeat False)
 
 -- | Writes sprite onto pixel array, and returns whether or not a collision
 --   occured. Writing occurs in a vertical fashion, writing 8 pixels horizontally
 --   and then moving down a row. 
-writeSprite :: PixelArr -> Sprite -> IO Bool
+writeSprite :: PixelArray -> Sprite -> IO Bool
 writeSprite arr ((x,y),pxString) =
     foldM (\b (pxByte,i) -> do
             b' <- writePixelByte arr (x, wrapy (y+i)) pxByte
@@ -35,7 +35,7 @@ writeSprite arr ((x,y),pxString) =
           )
     False $ zip pxString $ [0..(length pxString)-1]
 
-writePixelByte :: PixelArr -> (X,Y) -> PixelByte -> IO Bool
+writePixelByte :: PixelArray -> (X,Y) -> PixelByte -> IO Bool
 writePixelByte arr (x,y) pxs = 
     foldM (\b (px,i) -> do
             b' <- writePixelBit arr (wrapx (x+i),y) px
@@ -44,7 +44,7 @@ writePixelByte arr (x,y) pxs =
     False $ zip pxs [0..7] 
 
 -- | Writes as (y,x) or reversed, as y represents the row
-writePixelBit :: PixelArr -> (X,Y) -> Pixel -> IO Bool
+writePixelBit :: PixelArray -> (X,Y) -> Pixel -> IO Bool
 writePixelBit arr (x,y) newpx = do
     oldpx <- readArray arr (y,x)
     let px = bxor newpx oldpx
@@ -64,7 +64,7 @@ wrapx x = x `mod` 64
 wrapy :: Y -> Y
 wrapy y = y `mod` 32
 
-pixelPicture :: PixelArr -> IO Picture
+pixelPicture :: PixelArray -> IO Picture
 pixelPicture arr = liftM pictures $
     foldM (\pxs (x,y) -> do
                b <- readArray arr (y,x)
@@ -94,13 +94,13 @@ newPixel = color green $ rectangleSolid 10 10
 -- Debug
 -------------------------------------------------------------------------------
 
-prntArr :: PixelArr -> IO ()
+prntArr :: PixelArray -> IO ()
 prntArr arr = do
     assocs <- getAssocs arr
     putStrLn $ show assocs
 
 
-showDisplay :: PixelArr -> IO ()
+showDisplay :: PixelArray -> IO ()
 showDisplay arr = do
     picture <- pixelPicture arr
     display (InWindow "Chip-8" (640,320) (0,0)) black picture
