@@ -7,20 +7,29 @@ import Graphics.Gloss
 import System.Random
 
 data Parameters = Parms FilePath
+data World = World {
+    chip8   :: Chip8,
+    pxs     :: PixelArray,
+    pic     :: Picture,
+    refresh :: Bool
+}
 
 run :: IO ()
 run = do
-    initialize
+    w <- initialize
     putStrLn "Loaded."
 
-initialize :: IO (Chip8, PixelArray)
+effects :: World -> IO Picture
+effects = undefined    
+
+initialize :: IO World
 initialize = do
     (Parms fp) <- getParameters
     program    <- readData fp
     g          <- getStdGen
-    arr        <- mkPixelArray
+    pxs        <- mkPixelArray
     let c8 = loadData (mkChip8 g) 0x200 program
-    return (c8,arr)
+    return $ World c8 pxs Blank False
 
 getParameters :: IO Parameters
 getParameters = do

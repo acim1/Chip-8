@@ -106,8 +106,6 @@ showDisplay arr = do
     display (InWindow "Chip-8" (640,320) (0,0)) black picture
 
 
-main = (newListArray displayDimensions (cycle [True,True,False])) >>= showDisplay
-
 -------------------------------------------------------------------------------
 -- Commented Out Example Code
 -------------------------------------------------------------------------------
@@ -117,4 +115,6 @@ main = (newListArray displayDimensions (cycle [True,True,False])) >>= showDispla
 -- how to put a 10 x 10 pixel in the upper corner
 -- color green $ translate (-315) 155 $ rectangleSolid 10 10
 
-   
+-- main = (newListArray displayDimensions (cycle [True,True,False])) >>= showDisplay
+
+  
