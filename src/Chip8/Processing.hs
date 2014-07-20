@@ -125,8 +125,6 @@ decode oc = case uphi of
 execute :: Op -> State Chip8 ()
 execute op = do
     pcIncr
-    dtDecr
-    stDecr
     waitUpdate Nothing
     displayUpdate $ Draw Nothing
     execute' op
