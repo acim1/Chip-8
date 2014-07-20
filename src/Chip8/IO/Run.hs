@@ -2,6 +2,7 @@ module Chip8.IO.Run where
 
 import Chip8
 import Chip8.IO.Graphics
+import Chip8.Processing
 import qualified Data.ByteString as BS
 import qualified Graphics.Gloss as G
 import System.Process
@@ -18,6 +19,7 @@ data World = World {
 }
 
 data Parameters = Parms FilePath CPS
+    deriving Show
 
 type CPS = Int
 
@@ -27,11 +29,71 @@ run = do
     putStrLn "Loaded."
 
 -------------------------------------------------------------------------------
+-- Step World
+-------------------------------------------------------------------------------
+step :: Float -> World -> IO World
+step f w0 = do
+    w1 <- wUpdateDisplay w0
+    w2 <- wDraw w1
+    wSound w2
+    w3 <- return $ wCycleC8 w2
+    w4 <- return $ wUpRefresh w3
+    return w4
+
+wUpRefresh :: World -> World
+wUpRefresh w = 
+    w { refreshCtr = (rfCtr + 1) `mod` rfMod }
+  where
+    rfCtr = refreshCtr w
+    rfMod = refreshMod w
+
+wCycleC8 :: World -> World
+wCycleC8 w = w { chip8 = nextCycle c8 } 
+  where
+    c8 = chip8 w
+      
+
+wUpdateDisplay :: World -> IO World
+wUpdateDisplay w = 
+    case rfCtr of
+        0 -> do
+            pic <- pixelPicture arr
+            return $ w {display = pic}
+        _ ->
+            return w        
+  where
+    rfCtr = refreshCtr w
+    arr   = pixels w    
+
+wSound :: World -> IO ()
+wSound w = do
+    when (st > 0) soundEffect
+  where
+    st = stGet $ chip8 w
+
+wDraw :: World -> IO World
+wDraw w =
+    case (displayGet (chip8 w)) of
+        Draw (Just sprite) -> do
+            collision <- writeSprite arr sprite
+            return $ w { chip8 = vfSet' c8 collision }
+        Draw (Nothing) -> do
+            return w
+        Clear -> do
+            arr' <- mkPixelArray
+            return $ w {pixels = arr'}        
+  where
+    arr = pixels w
+    c8  = chip8 w        
+            
+
+
+-------------------------------------------------------------------------------
 -- Effects
 -------------------------------------------------------------------------------
 
-showDisplay :: World -> IO G.Picture
-showDisplay w = return $ display w 
+draw :: World -> IO G.Picture
+draw w = return $ display w
 
 -- when (st > 0) soundEffect
 soundEffect :: IO ()

@@ -5,6 +5,7 @@ module Chip8
   regSet,
   regGet,
   vfSet,
+  vfSet',
   vfGet,
   iSet,
   iGet,
@@ -27,6 +28,8 @@ module Chip8
   displayGet,
   waitSet,
   waitGet,
+  refreshSet,
+  refreshGet,
   hexSpriteAddr,
   -- Types
   Byte,
@@ -108,7 +111,8 @@ data Chip8 = C8 {
     randg    :: StdGen,
     keyboard :: Keyboard,
     display  :: Display,
-    wait     :: Maybe Vx
+    wait     :: Maybe Vx,
+    refresh  :: Bool
 } deriving (Show) 
 
 -- Construction
@@ -125,7 +129,8 @@ mkChip8 g = loadData c8 0x000 hexSprites
     randg     = g, -- for opcodes which require randomness
     keyboard  = [], -- currently depressed keys
     display   = Draw Nothing,
-    wait      = Nothing
+    wait      = Nothing,
+    refresh   = False
   }
 
 -- Load program/program data in contiguous addresses
@@ -144,6 +149,12 @@ regGet c8 k = M.findWithDefault 0x00 (int k) $ regs c8
 
 vfSet :: Chip8 -> Byte -> Chip8
 vfSet c8 x = regSet c8 0xF x
+
+vfSet' :: Chip8 -> Bool -> Chip8
+vfSet' c8 b = regSet c8 0xF flag
+  where
+    flag = if b then 0x1 else 0x0
+    
 
 vfGet :: Chip8 -> Byte
 vfGet c8 = regGet c8 0xF
@@ -229,6 +240,13 @@ waitSet c8 x = c8 {wait = x}
 
 waitGet :: Chip8 -> Maybe Vx
 waitGet = wait
+
+-- ST/DT refresh
+refreshSet :: Chip8 -> Bool -> Chip8
+refreshSet c8 b = c8 {refresh = b}
+
+refreshGet :: Chip8 -> Bool
+refreshGet = refresh
 
 -- Pre-loaded Hex Digit Sprites
 hexSprites :: [Byte]

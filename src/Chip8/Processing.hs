@@ -125,6 +125,9 @@ decode oc = case uphi of
 execute :: Op -> State Chip8 ()
 execute op = do
     pcIncr
+    refresh <- refreshFetch
+    when refresh dtDecr
+    when refresh stDecr  
     waitUpdate Nothing
     displayUpdate $ Draw Nothing
     execute' op
@@ -397,6 +400,14 @@ getPixels c8 addr n = [byte2Pixels $ memGet c8 (addr + k) | k <- [0..(n'-1)]]
     byte2Pixels byte = zipWith testBit (repeat byte) lilEndianBits
     lilEndianBits = reverse [0..7]  
  
+-- Refresh
+refreshUpdate :: Bool -> State Chip8 ()
+refreshUpdate b = state $ \c8 ->
+                  ((),refreshSet c8 b)
+
+refreshFetch :: State Chip8 Bool
+refreshFetch = state $ \c8 ->
+               (refreshGet c8, c8) 
                   
 -- Randomness
 randgFetch :: State Chip8 StdGen
