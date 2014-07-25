@@ -3,6 +3,9 @@ module Chip8.IO.Run where
 import Chip8
 import Chip8.IO.Graphics
 import Chip8.Processing
+import Control.Applicative
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.State
 import qualified Data.ByteString as BS
 import qualified Graphics.Gloss as G
 import System.Process
@@ -12,7 +15,7 @@ import Control.Monad
 data World = World {
     chip8         :: Chip8,
     display       :: G.Picture,
-    pixels        :: PixelArray,
+    pxArray       :: PixelArray,
     cycleRate     :: CPS,   -- cycles per second
     refreshMod    :: Int,   -- (cycleRate / 60 hz)
     refreshCtr    :: Int    -- (running cycle count) mod (refreshMod)  
@@ -31,6 +34,14 @@ run = do
 -------------------------------------------------------------------------------
 -- Step World
 -------------------------------------------------------------------------------
+
+step' :: StateT World IO ()
+step' = do
+    wDisplayUpd
+    modify wRefreshUpd
+    wSound
+
+{-
 step :: Float -> World -> IO World
 step f w0 = do
     w1 <- wUpdateDisplay w0
@@ -39,37 +50,37 @@ step f w0 = do
     w3 <- return $ wCycleC8 w2
     w4 <- return $ wUpRefresh w3
     return w4
+-}   
 
-wUpRefresh :: World -> World
-wUpRefresh w = 
+-- put this in the StateT monad and update Chip8 refresh var??
+wRefreshUpd :: World -> World
+wRefreshUpd w = 
     w { refreshCtr = (rfCtr + 1) `mod` rfMod }
   where
     rfCtr = refreshCtr w
     rfMod = refreshMod w
 
-wCycleC8 :: World -> World
-wCycleC8 w = w { chip8 = nextCycle c8 } 
+wRunC8 :: World -> World
+wRunC8 w = w { chip8 = nextCycle c8 } 
   where
     c8 = chip8 w
       
 
-wUpdateDisplay :: World -> IO World
-wUpdateDisplay w = 
+wDisplayUpd :: StateT World IO ()
+wDisplayUpd = do
+    rfCtr <- gets refreshCtr
     case rfCtr of
         0 -> do
-            pic <- pixelPicture arr
-            return $ w {display = pic}
+            pxArr <- gets pxArray
+            pic   <- lift $ pixelPicture pxArr
+            modify $ \w -> w {display = pic}
         _ ->
-            return w        
-  where
-    rfCtr = refreshCtr w
-    arr   = pixels w    
+            return ()        
 
-wSound :: World -> IO ()
-wSound w = do
-    when (st > 0) soundEffect
-  where
-    st = stGet $ chip8 w
+wSound :: StateT World IO ()
+wSound = do
+    st <- (stGet . chip8) <$> get 
+    lift $ when (st > 0) soundEffect
 
 wDraw :: World -> IO World
 wDraw w =
@@ -81,9 +92,9 @@ wDraw w =
             return w
         Clear -> do
             arr' <- mkPixelArray
-            return $ w {pixels = arr'}        
+            return $ w {pxArray = arr'}        
   where
-    arr = pixels w
+    arr = pxArray w
     c8  = chip8 w        
             
 
