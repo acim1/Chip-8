@@ -35,11 +35,16 @@ run = do
 -- Step World
 -------------------------------------------------------------------------------
 
+step :: World -> IO World
+step = execStateT step' 
+
 step' :: StateT World IO ()
 step' = do
+    wDraw
     wDisplayUpd
-    modify wRefreshUpd
     wSound
+    modify wRunC8
+    wRefreshUpd
 
 {-
 step :: Float -> World -> IO World
@@ -52,14 +57,16 @@ step f w0 = do
     return w4
 -}   
 
--- put this in the StateT monad and update Chip8 refresh var??
-wRefreshUpd :: World -> World
-wRefreshUpd w = 
-    w { refreshCtr = (rfCtr + 1) `mod` rfMod }
-  where
-    rfCtr = refreshCtr w
-    rfMod = refreshMod w
-
+wRefreshUpd :: StateT World IO ()
+wRefreshUpd = do
+    rfCtr  <- gets refreshCtr
+    rfMod  <- gets refreshMod
+    c8     <- gets chip8
+    let rfCtr' = (rfCtr + 1) `mod` rfMod
+    let b      = rfCtr == 0
+    modify $ \w -> w {refreshCtr = rfCtr}
+    modify $ \w -> w {chip8 = refreshSet c8 b }
+       
 wRunC8 :: World -> World
 wRunC8 w = w { chip8 = nextCycle c8 } 
   where
@@ -82,6 +89,22 @@ wSound = do
     st <- (stGet . chip8) <$> get 
     lift $ when (st > 0) soundEffect
 
+wDraw :: StateT World IO ()
+wDraw = do
+    dsply <- gets $ displayGet . chip8
+    case dsply of
+        Draw (Just sprite) -> do
+            pxArr <- gets pxArray
+            c8    <- gets chip8
+            collision <- lift $ writeSprite pxArr sprite
+            modify $ \w -> w {chip8 = vfSet' c8 collision}
+        Draw Nothing -> do
+            return ()
+        Clear -> do
+            pxArr <- lift mkPixelArray
+            modify $ \w -> w {pxArray = pxArr}   
+
+{-
 wDraw :: World -> IO World
 wDraw w =
     case (displayGet (chip8 w)) of
@@ -96,7 +119,7 @@ wDraw w =
   where
     arr = pxArray w
     c8  = chip8 w        
-            
+-}            
 
 
 -------------------------------------------------------------------------------
@@ -104,7 +127,7 @@ wDraw w =
 -------------------------------------------------------------------------------
 
 draw :: World -> IO G.Picture
-draw w = return $ display w
+draw = return . display
 
 -- when (st > 0) soundEffect
 soundEffect :: IO ()
