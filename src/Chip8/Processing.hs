@@ -128,7 +128,6 @@ execute op = do
     refresh <- refreshFetch
     when refresh dtDecr
     when refresh stDecr  
-    waitUpdate Nothing
     displayUpdate $ Draw Nothing
     execute' op
 

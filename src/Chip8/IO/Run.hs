@@ -70,8 +70,10 @@ wRefreshUpd = do
     modify $ \w -> w {chip8 = refreshSet c8 b }
        
 wRunC8 :: World -> World
-wRunC8 w = w { chip8 = nextCycle c8 } 
+wRunC8 w = waitFor (waitGet c8) -- do next cycle unless waiting for input
   where
+    waitFor Nothing = w { chip8 = nextCycle c8 }
+    waitFor _       = w
     c8 = chip8 w
       
 
@@ -106,16 +108,49 @@ wDraw = do
             pxArr <- lift mkPixelArray
             modify $ \w -> w {pxArray = pxArr}   
 
-wEvent' :: Event -> world -> IO World
-wEvent' (EventKey (Char ch) (Down) _ _) w = undefined
+-------------------------------------------------------------------------------
+-- Event Handling
+-------------------------------------------------------------------------------
+
+event :: Event -> world -> IO World
+event (EventKey (Char ch) (keystate) _ _) w = undefined
 
 wEvent :: Char -> KeyState -> StateT World IO ()
-wEvent k Down = do
+-- Key Down
+wEvent ch Down = do
     c8 <- gets chip8
     let ks   = kbGet c8
     let wait = waitGet c8
-    when (notElem k ks) $
-        modify $ \w -> w {chip8 = kbSet c8 (k:ks)} 
+    let ew = endWait
+    case (M.lookup ch kbMap) of
+        Just k -> do
+            let b = notElem k ks
+            when b $ do
+                modify $ \w -> w {chip8 = kbSet c8 (k:ks)}
+                ew wait k
+        Nothing -> do
+            return ()
+  where            
+    endWait Nothing _  = return ()
+    endWait (Just reg) k = do
+        c8   <- gets chip8
+        let c8'  = regSet c8 reg k
+        let c8'' = waitSet c8' Nothing
+        modify $ \w -> w {chip8 = c8''}
+-- Key Up            
+wEvent ch Up = undefined -- TODO
+
+
+                        
+
+kbMap :: M.Map Char Byte
+kbMap = M.fromList $
+        zip 
+        ['1','2','3','4'
+        ,'q','w','e','r'
+        ,'a','s','d','f'
+        ,'z','x','c','v']
+        [0x0..0xF]
 
 
 {-
