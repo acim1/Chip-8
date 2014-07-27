@@ -377,7 +377,7 @@ waitUpdate x = state $ \c8 ->
 -- Keyboard
 kbFetch :: State Chip8 Keyboard
 kbFetch = state $ \c8 ->
-          (keyboardGet c8, c8)
+          (kbGet c8, c8)
           
 -- Display
 displayUpdate :: Display -> State Chip8 ()

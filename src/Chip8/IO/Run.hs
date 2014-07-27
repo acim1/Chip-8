@@ -7,7 +7,9 @@ import Control.Applicative
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
 import qualified Data.ByteString as BS
+import qualified Data.Map as M
 import qualified Graphics.Gloss as G
+import Graphics.Gloss.Interface.IO.Game
 import System.Process
 import System.Random
 import Control.Monad
@@ -104,6 +106,18 @@ wDraw = do
             pxArr <- lift mkPixelArray
             modify $ \w -> w {pxArray = pxArr}   
 
+wEvent' :: Event -> world -> IO World
+wEvent' (EventKey (Char ch) (Down) _ _) w = undefined
+
+wEvent :: Char -> KeyState -> StateT World IO ()
+wEvent k Down = do
+    c8 <- gets chip8
+    let ks   = kbGet c8
+    let wait = waitGet c8
+    when (notElem k ks) $
+        modify $ \w -> w {chip8 = kbSet c8 (k:ks)} 
+
+
 {-
 wDraw :: World -> IO World
 wDraw w =
@@ -145,9 +159,9 @@ initialize = do
     (Parms fp cps) <- getParameters
     program    <- readData fp
     g          <- getStdGen
-    pxs        <- mkPixelArray
+    pxArr      <- mkPixelArray
     let c8 = loadData (mkChip8 g) 0x200 program
-    return $ World c8 G.Blank pxs cps (cps `quot` 60) 0
+    return $ World c8 G.Blank pxArr cps (cps `quot` 60) 0
   where    
     readData fp = do
         contents <- BS.readFile fp

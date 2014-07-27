@@ -22,8 +22,8 @@ module Chip8
   push,
   randgSet,
   randgGet,
-  keyboardSet,
-  keyboardGet,
+  kbSet,
+  kbGet,
   displaySet,
   displayGet,
   waitSet,
@@ -221,11 +221,11 @@ randgGet :: Chip8 -> StdGen
 randgGet = randg
 
 -- Keyboard
-keyboardSet :: Chip8 -> Keyboard -> Chip8
-keyboardSet c8 xs = c8 {keyboard = xs}
+kbSet :: Chip8 -> Keyboard -> Chip8
+kbSet c8 xs = c8 {keyboard = xs}
 
-keyboardGet :: Chip8 -> Keyboard
-keyboardGet = keyboard
+kbGet :: Chip8 -> Keyboard
+kbGet = keyboard
 
 -- Display
 displaySet :: Chip8 -> Display -> Chip8
