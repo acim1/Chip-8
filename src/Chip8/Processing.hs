@@ -334,8 +334,8 @@ iFetch = state $ \c8 ->
 -- Stack
 popStack :: State Chip8 Address
 popStack = state $ \c8 ->
-            let c8' = pop c8
-                x   = peak c8'
+            let x   = peak c8
+                c8' = pop c8
             in (x,c8')
 
 pushStack :: Address -> State Chip8 ()

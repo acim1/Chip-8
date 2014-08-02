@@ -7,6 +7,7 @@ import Control.Applicative
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State
 import qualified Data.ByteString as BS
+import Data.List
 import qualified Data.Map as M
 import qualified Graphics.Gloss as G
 import Graphics.Gloss.Interface.IO.Game
@@ -31,14 +32,22 @@ type CPS = Int
 run :: IO ()
 run = do
     w <- initialize
-    putStrLn "Loaded."
+    playIO 
+        (G.InWindow "Chip-8" (640,320) (0,0))
+        G.black
+        (cycleRate w)
+        w
+        draw
+        event
+        step
+
 
 -------------------------------------------------------------------------------
 -- Step World
 -------------------------------------------------------------------------------
 
-step :: World -> IO World
-step = execStateT step' 
+step :: Float -> World -> IO World
+step f w = execStateT step' w
 
 step' :: StateT World IO ()
 step' = do
@@ -112,24 +121,32 @@ wDraw = do
 -- Event Handling
 -------------------------------------------------------------------------------
 
-event :: Event -> world -> IO World
-event (EventKey (Char ch) (keystate) _ _) w = undefined
+event :: Event -> World -> IO World
+event (EventKey (Char ch) (keystate) _ _) w =
+    execStateT (wEvent ch keystate) w
+event _ w = return w    
 
 wEvent :: Char -> KeyState -> StateT World IO ()
--- Key Down
-wEvent ch Down = do
-    c8 <- gets chip8
-    let ks   = kbGet c8
-    let wait = waitGet c8
-    let ew = endWait
-    case (M.lookup ch kbMap) of
-        Just k -> do
-            let b = notElem k ks
-            when b $ do
-                modify $ \w -> w {chip8 = kbSet c8 (k:ks)}
-                ew wait k
-        Nothing -> do
-            return ()
+wEvent ch keystate
+    | keystate == Down || keystate == Up = do
+        c8 <- gets chip8
+        let ks   = kbGet c8
+        let wait = waitGet c8
+        let ew = endWait
+        case (M.lookup ch kbMap) of
+            Just k -> do
+                let ne   = notElem k ks
+                let down = keystate == Down
+                let up   = not down
+                when (ne && down) $ do
+                    modify $ \w -> w {chip8 = kbSet c8 (k:ks)}
+                    ew wait k
+                when (up) $ do
+                    modify $ \w -> w {chip8 = kbSet c8 (delete k ks)}     
+            Nothing -> do
+                return ()
+    | otherwise = do
+        return ()            
   where            
     endWait Nothing _  = return ()
     endWait (Just reg) k = do
@@ -137,10 +154,6 @@ wEvent ch Down = do
         let c8'  = regSet c8 reg k
         let c8'' = waitSet c8' Nothing
         modify $ \w -> w {chip8 = c8''}
--- Key Up            
-wEvent ch Up = undefined -- TODO
-
-
                         
 
 kbMap :: M.Map Char Byte
